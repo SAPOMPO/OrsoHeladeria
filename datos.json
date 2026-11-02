@@ -1,0 +1,68 @@
+{
+  "CONFIG": {
+    "rappiUrl": "https://www.rappi.com.co/",
+    "instagramUrl": "",
+    "facebookUrl": ""
+  },
+  "FLAVOR_LABELS": {
+    "frutal": "Frutal",
+    "cremoso": "Cremoso",
+    "especial": "Especial"
+  },
+  "FLAVORS": [
+    {
+      "n": "Pistacho",
+      "t": "cremoso",
+      "c": "#A9B58A",
+      "d": "Un clásico cremoso para quienes disfrutan los sabores de frutos secos."
+    },
+    {
+      "n": "Guayaba agria",
+      "t": "frutal",
+      "c": "#E59A8E",
+      "d": "Frutal y con un toque ácido que refresca."
+    },
+    {
+      "n": "Lulo",
+      "t": "frutal",
+      "c": "#C9D26B",
+      "d": "El sabor del lulo colombiano, vibrante y refrescante."
+    },
+    {
+      "n": "Red Velvet",
+      "t": "especial",
+      "c": "#B5473F",
+      "d": "Inspirado en el famoso pastel, en versión helado."
+    },
+    {
+      "n": "Torta de cumpleaños",
+      "t": "especial",
+      "c": "#E9B6D0",
+      "d": "Un sabor festivo que recuerda a una torta de celebración."
+    },
+    {
+      "n": "Higos con jengibre y miel",
+      "t": "especial",
+      "c": "#9B7A8C",
+      "d": "Una combinación sofisticada de higos, jengibre y miel."
+    },
+    {
+      "n": "Cacao nibs",
+      "t": "cremoso",
+      "c": "#6B4A3A",
+      "d": "Chocolate con textura crocante de nibs de cacao."
+    },
+    {
+      "n": "Canela Cookie Dough",
+      "t": "cremoso",
+      "c": "#C79A6B",
+      "d": "Masa de galleta con el calor de la canela."
+    },
+    {
+      "n": "Arequipe salado",
+      "t": "especial",
+      "c": "#D3A35E",
+      "d": "El arequipe de siempre con un toque salado que lo hace distinto."
+    }
+  ]
+}

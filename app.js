@@ -1,4 +1,3 @@
-import { CONFIG, FLAVORS, FLAVOR_LABELS } from "./datos.js";
 import { db } from "./firebase.js";
 
 // Mantiene inicializado el servicio para futuras funciones de base de datos.
@@ -7,42 +6,111 @@ void db;
 const $ = (selector, context = document) => context.querySelector(selector);
 const $$ = (selector, context = document) => [...context.querySelectorAll(selector)];
 
-// Enlaces externos de Rappi.
-$$("[data-rappi]").forEach(link => {
-  link.href = CONFIG.rappiUrl;
-});
+// Carga asíncrona de los datos desde datos.json para evitar errores de importación estática
+async function iniciarApp() {
+  try {
+    const respuesta = await fetch('./datos.json');
+    if (!respuesta.ok) throw new Error('No se pudo cargar datos.json');
+    const { CONFIG, FLAVOR_LABELS, FLAVORS } = await respuesta.json();
 
-// Redes sociales opcionales.
-const socials = $("#socials");
+    // Enlaces externos de Rappi.
+    $$("[data-rappi]").forEach(link => {
+      link.href = CONFIG.rappiUrl;
+    });
 
-const iconIG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6" fill="currentColor"/></svg>';
-const iconFB = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h-2a4 4 0 0 0-4 4v3H6v4h3v7h4v-7h3l1-4h-4V7a1 1 0 0 1 1-1h2z"/></svg>';
+    // Redes sociales opcionales.
+    const socials = $("#socials");
+    const iconIG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6" fill="currentColor"/></svg>';
+    const iconFB = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h-2a4 4 0 0 0-4 4v3H6v4h3v7h4v-7h3l1-4h-4V7a1 1 0 0 1 1-1h2z"/></svg>';
 
-if (socials) {
-  [
-    [CONFIG.instagramUrl, "Instagram", iconIG],
-    [CONFIG.facebookUrl, "Facebook", iconFB]
-  ].forEach(([url, label, icon]) => {
-    if (!url) return;
+    if (socials) {
+      [
+        [CONFIG.instagramUrl, "Instagram", iconIG],
+        [CONFIG.facebookUrl, "Facebook", iconFB]
+      ].forEach(([url, label, icon]) => {
+        if (!url) return;
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.setAttribute("aria-label", label);
+        link.innerHTML = icon;
+        socials.prepend(link);
+      });
+    }
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.target = "_blank";
-    link.rel = "noopener";
-    link.setAttribute("aria-label", label);
-    link.innerHTML = icon;
-    socials.prepend(link);
-  });
+    // Catálogo y filtros de sabores.
+    const flavorGrid = $("#flavors");
+    const flavorDetail = $("#flavorDetail");
+
+    if (flavorGrid && flavorDetail) {
+      FLAVORS.forEach(flavor => {
+        const button = document.createElement("button");
+        const dot = document.createElement("span");
+        const content = document.createElement("div");
+        const name = document.createElement("h3");
+        const category = document.createElement("small");
+
+        button.className = "flavor reveal";
+        button.type = "button";
+        button.dataset.type = flavor.t;
+
+        dot.className = "dot";
+        dot.style.setProperty("--flavor-color", flavor.c);
+
+        name.textContent = flavor.n;
+        category.textContent = FLAVOR_LABELS[flavor.t] || flavor.t;
+
+        content.append(name, category);
+        button.append(dot, content);
+
+        button.addEventListener("click", () => {
+          $$(".flavor", flavorGrid).forEach(item => {
+            item.classList.remove("selected");
+          });
+
+          button.classList.add("selected");
+
+          const detailTitle = document.createElement("h3");
+          const detailText = document.createElement("p");
+
+          detailTitle.textContent = flavor.n;
+          detailText.textContent = flavor.d;
+          flavorDetail.replaceChildren(detailTitle, detailText);
+        });
+
+        flavorGrid.append(button);
+      });
+
+      $$(".chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+          $$(".chip").forEach(item => {
+            item.setAttribute("aria-pressed", String(item === chip));
+          });
+
+          const filter = chip.dataset.filter;
+
+          $$(".flavor", flavorGrid).forEach(item => {
+            const shouldHide = filter !== "todos" && item.dataset.type !== filter;
+            item.classList.toggle("hide", shouldHide);
+          });
+        });
+      });
+    }
+
+  } catch (error) {
+    console.error("Error al inicializar los datos de la aplicación:", error);
+  }
 }
+
+iniciarApp();
 
 // Navbar: sombra al desplazarse.
 const nav = $("#nav");
-
 if (nav) {
   const onScroll = () => {
     nav.classList.toggle("scrolled", window.scrollY > 10);
   };
-
   onScroll();
   window.addEventListener("scroll", onScroll, { passive: true });
 }
@@ -53,7 +121,6 @@ const mobileMenu = $("#mobileMenu");
 
 const setMenu = open => {
   if (!burger || !mobileMenu) return;
-
   burger.setAttribute("aria-expanded", String(open));
   burger.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
   mobileMenu.classList.toggle("open", open);
@@ -87,7 +154,6 @@ const fallback = img => {
 
 $$("img.ph").forEach(img => {
   img.addEventListener("error", () => fallback(img), { once: true });
-
   if (img.complete && img.naturalWidth === 0) {
     fallback(img);
   }
@@ -121,11 +187,9 @@ tabs.forEach((tab, index) => {
     if (event.key === "ArrowRight") {
       nextTab = tabs[(index + 1) % tabs.length];
     }
-
     if (event.key === "ArrowLeft") {
       nextTab = tabs[(index - 1 + tabs.length) % tabs.length];
     }
-
     if (event.key === "Home") nextTab = tabs[0];
     if (event.key === "End") nextTab = tabs[tabs.length - 1];
 
@@ -136,65 +200,6 @@ tabs.forEach((tab, index) => {
     }
   });
 });
-
-// Catálogo y filtros de sabores.
-const flavorGrid = $("#flavors");
-const flavorDetail = $("#flavorDetail");
-
-if (flavorGrid && flavorDetail) {
-  FLAVORS.forEach(flavor => {
-    const button = document.createElement("button");
-    const dot = document.createElement("span");
-    const content = document.createElement("div");
-    const name = document.createElement("h3");
-    const category = document.createElement("small");
-
-    button.className = "flavor reveal";
-    button.type = "button";
-    button.dataset.type = flavor.t;
-
-    dot.className = "dot";
-    dot.style.setProperty("--flavor-color", flavor.c);
-
-    name.textContent = flavor.n;
-    category.textContent = FLAVOR_LABELS[flavor.t] || flavor.t;
-
-    content.append(name, category);
-    button.append(dot, content);
-
-    button.addEventListener("click", () => {
-      $$(".flavor", flavorGrid).forEach(item => {
-        item.classList.remove("selected");
-      });
-
-      button.classList.add("selected");
-
-      const detailTitle = document.createElement("h3");
-      const detailText = document.createElement("p");
-
-      detailTitle.textContent = flavor.n;
-      detailText.textContent = flavor.d;
-      flavorDetail.replaceChildren(detailTitle, detailText);
-    });
-
-    flavorGrid.append(button);
-  });
-
-  $$(".chip").forEach(chip => {
-    chip.addEventListener("click", () => {
-      $$(".chip").forEach(item => {
-        item.setAttribute("aria-pressed", String(item === chip));
-      });
-
-      const filter = chip.dataset.filter;
-
-      $$(".flavor", flavorGrid).forEach(item => {
-        const shouldHide = filter !== "todos" && item.dataset.type !== filter;
-        item.classList.toggle("hide", shouldHide);
-      });
-    });
-  });
-}
 
 // Galería y ventana de imagen ampliada.
 const lightbox = $("#lightbox");
